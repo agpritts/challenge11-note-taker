@@ -10,6 +10,6 @@ app.use(express.json());
 app.use(express.static("public"));
 app.use('/', htmlRoutes);
 
-app.listen(PORT, function() {
+app.listen(PORT, () => {
     console.log("App listening on PORT: " + PORT);
 });
