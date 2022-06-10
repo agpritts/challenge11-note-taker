@@ -1,44 +1,62 @@
-const fs = require("fs");
-const util = require("util");
-const writeFileAsync = util.promisify(fs.writeFile);
-const readFileAsync = util.promisify(fs.readFile);
+const router = require('express').Router();
+const fs = require('fs');
+let uniqid = require('uniqid'); 
 
-var noteContents;
-module.exports = function (app) {
-
-    app.get("/api/notes", function (req, res) {
-        readFileAsync("db/db.json", "utf8").then(function (data) {
-            noteContents = JSON.parse(data)
-            res.json(noteContents);
-        })
-    })
-
-    app.post("/api/notes", function (req, res) {
-        let newNote = req.body;
-        let lastId = 0;
-        if (noteContents.length !== 0) {
-            lastId = noteContents[noteContents.length - 1]["id"];
+router.get("/notes", function(req, res) {
+    fs.readFile("./db/db.json", "utf8", function (err, data) {
+        if (err) {
+            console.log(err);
+            return;
         }
-        let newId = lastId + 1;
-        newNote["id"] = newId;
-        noteContents.push(newNote);
-        writeFileAsync("db/db.json", JSON.stringify(noteContents)).then(function () {
-            console.log("Note updated");
-        });
-        res.json(newNote);
+        res.json(JSON.parse(data));
     });
+})
 
-    app.delete("/api/notes/:id", function (req, res) {
-        let chosenId = parseInt(req.params.id);
-        for (let i = 0; i < noteContents.length; i++) {
-            if (chosenId === noteContents[i].id) {
-                noteContents.splice(i, 1);
-                let noteJSON = JSON.stringify(noteContents, null, 2);
-                writeFileAsync("db/db.json", noteJSON).then(function () {
-                    console.log("Note deleted");
-                });
+router.post("/notes", function(req, res) {
+    let id = uniqid();
+    let newNote = {
+        id: id,
+        title: req.body.title,
+        text: req.body.text,
+    };
+
+    fs.readFile("./db/db.json", "utf8", function(err, data) {
+        if (err) {
+            console.log(err);
+            return;
+        }
+        const notesArray = JSON.parse(data);
+        notesArray.push(newNote);
+        const stringifyNote = JSON.stringify(notesArray);
+        fs.writeFile("./db/db.json", stringifyNote, (err) => {
+            if (err) console.log(err);
+            else {
+                console.log("Note saved");
+                res.json('added note')
             }
-        }
-        res.json(noteContents);
+        });
     });
-};
+});
+
+router.delete('/notes/:id', (req, res) => {
+    const idToDelete = req.params.id;
+    fs.readFile("./db/db.json", "utf8", function (err, data) {
+        if (err) {
+            console.log(err);
+            return;
+        }
+        const noteArray = JSON.parse(data);
+        const filterArray = noteArray.filter(note => note.id !== idToDelete)
+        fs.writeFile("./db/db.json", JSON.stringify(filterArray), (err) => {
+            if (err) console.log(err);
+            else {
+                console.log("Note deleted");
+                res.json(filterArray)
+            }
+        });
+    });
+
+})
+
+
+module.exports = router;
