@@ -23,7 +23,7 @@ module.exports = function (app) {
         newNote["id"] = newId;
         noteContents.push(newNote);
         writeFileAsync("db/db.json", JSON.stringify(noteContents)).then(function () {
-            console.log("Note has been updated");
+            console.log("Note updated");
         });
         res.json(newNote);
     });
@@ -35,7 +35,7 @@ module.exports = function (app) {
                 noteContents.splice(i, 1);
                 let noteJSON = JSON.stringify(noteContents, null, 2);
                 writeFileAsync("db/db.json", noteJSON).then(function () {
-                    console.log("Note has been deleted");
+                    console.log("Note deleted");
                 });
             }
         }
